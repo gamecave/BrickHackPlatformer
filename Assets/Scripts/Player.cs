@@ -39,16 +39,6 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        // Handles movement
-        if((Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.D)) && (isGrounded || Mathf.Abs(rb.velocity.x) > 0.01f))
-        {
-            moveDirection = Input.GetKey(KeyCode.A) ? -1 : 1;
-        }
-        else if (isGrounded || rb.velocity.magnitude < 0.01f)
-        {
-           moveDirection = 0;
-        }
-
         // Change face
         if(moveDirection != 0)
         {
@@ -57,12 +47,6 @@ public class Player : MonoBehaviour
                 facingRight = true;
                 transform.localScale = new Vector3(Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
             }
-        }
-
-        // Jump
-        if((Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.Space)) && isGrounded)
-        {
-            rb.velocity = new Vector2(rb.velocity.x, jumpHeight);
         }
 
         // Score Over Time
@@ -75,6 +59,29 @@ public class Player : MonoBehaviour
             UpdateScore();
         }
         
+    }
+
+    public void PlayerMovement(string hori, string vert, string action)
+    {
+        switch (hori)
+        {
+            case "1":
+                moveDirection = 1;
+                break;
+            case "-1":
+                moveDirection = -1;
+                break;
+            default:
+                moveDirection = 0;
+                break;
+        }
+
+        rb.velocity = new Vector2((moveDirection * maxSpeed * Time.deltaTime), rb.velocity.y);
+
+        if(vert == "1" || action == "1")
+        {
+            rb.velocity = new Vector2(rb.velocity.x, jumpHeight * Time.deltaTime);
+        }
     }
 
     private void FixedUpdate()
@@ -97,10 +104,6 @@ public class Player : MonoBehaviour
                 }
             }
         }
-
-
-        // Apply movement
-        rb.velocity = new Vector2((moveDirection * maxSpeed), rb.velocity.y);
     }
 
     void UpdateScore()
@@ -115,6 +118,13 @@ public class Player : MonoBehaviour
             Destroy(collision.gameObject);
             score += 50;
             UpdateScore();
+        }
+
+        if (collision.gameObject.tag == "Bullet")
+        {
+            Destroy(collision.gameObject);
+            Destroy(this.gameObject);
+            print("Player hit by projectile");
         }
     }
 }

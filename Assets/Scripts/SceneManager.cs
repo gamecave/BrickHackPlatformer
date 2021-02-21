@@ -14,38 +14,53 @@ public class SceneManager : MonoBehaviour
     float timer = 0.0f;
 
     [SerializeField] Text scoreText;
+    [SerializeField] Text gameOverText;
 
     [DllImport("__Internal")]
     private static extern string[,] GetInput();
 
+    bool idChecked = false;
+    bool gameOver = false;
+
     // Start is called before the first frame update
     void Start()
     {
-        
+        gameOverText.enabled = false;
     }
 
     // Update is called once per frame
     void Update()
     {
-        timer += Time.deltaTime;
-        if(timer >= scoreTimer)
+        if(!gameOver)
         {
-            timer = 0.0f;
-            score += 10;
-            UpdateScore();
-        }
+            timer += Time.deltaTime;
+            if (timer >= scoreTimer)
+            {
+                timer = 0.0f;
+                score += 10;
+                UpdateScore();
+            }
 
-        GetPlayerInputs();
+            GetPlayerInputs();
+
+            CheckGameOver();
+        }
     }
 
     void GetPlayerInputs()
     {
         string[,] inputs = GetInput();
-        for (int i = 0; i < inputs.Length; i++)
+        for (int i = 0; i < inputs.GetLength(0); i++)
         {
+            if (!idChecked)
+            {
+                CreatePlayer(inputs[i, 0]);
+            }
+
             // Input comes in as [{id=123, forward=1, horizontal=-1, action=0},...]
             ApplyMovement(inputs[i, 0], inputs[i, 1], inputs[i, 2], inputs[i, 3]);
         }
+        idChecked = true;
     }
 
     void ApplyMovement(string id, string forward, string right, string action)
@@ -53,6 +68,7 @@ public class SceneManager : MonoBehaviour
         GameObject player = playerList[id].gameObject;
         //player.GetComponent<Player>().MovePlayer();
         // Call a movement function from Player script to move that specific player.
+        playerList[id].GetComponent<Player>().PlayerMovement(forward, right, action);
     }
 
     void UpdateScore()
@@ -60,7 +76,7 @@ public class SceneManager : MonoBehaviour
         scoreText.text = $"Score: {score}";
     }
 
-    void createPlayer(string id)
+    void CreatePlayer(string id)
     {
         for (int i = 0; i < playerArr.Length; i++)
         {
@@ -69,5 +85,23 @@ public class SceneManager : MonoBehaviour
                 playerArr[i].GetComponent<Player>().idNumber = id;
             }
         }
+    }
+
+    /// <summary>
+    /// If all players die, end game and display score
+    /// </summary>
+    void CheckGameOver()
+    {
+        // Only two players
+        if (playerArr[0] == null && playerArr[1] == null)
+        {
+            gameOver = true;
+        }
+    }
+
+    void GameOverScreen()
+    {
+        gameOverText.text = $"Game Over!\nScore: {score}";
+        gameOverText.enabled = true;
     }
 }
